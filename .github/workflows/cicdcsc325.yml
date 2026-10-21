@@ -6,13 +6,11 @@ on:
       - main
 
 jobs: 
-  build-test-deploy:
+  build-test-security-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
+      - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -20,12 +18,23 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install django
+          python -m pip install --upgrade pip
+          pip install -r requierments.txt
 
       - name: Run tests
         run: |
-          python manage.py test
+          pytest
 
-      - name: Deploy
+      - name: Run Bandit security checks
         run: |
-          echo "Deploying the application..."
+          bandit -r .
+
+      - name: Run Safety security checks
+        run: |
+          safety check
+
+      - name: Deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "Deploying the application"
